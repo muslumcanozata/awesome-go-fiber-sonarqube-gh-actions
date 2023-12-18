@@ -1,0 +1,48 @@
+version: '3.8'
+services:
+   #web:
+   # build: .
+   # env_file:
+   #   - .env
+   # ports:
+   #   - 3000:3000
+   #volumes:
+   #  - .:/usr/src/awesome-go-fiber-sonarqube-gh-actions
+   #command: air cmd/main.go -b 0.0.0.0
+  db:
+    image: postgres:alpine
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    ports:
+      - ${DB_PORT}:${DB_PORT}
+    volumes:
+      - postgres-db:/var/lib/postgresql/data
+  sonarqube:
+    image: sonarqube:latest
+    ports:
+      - "9000:9000"
+    environment:
+      - SONARQUBE_JDBC_USERNAME=${DB_USER}
+      - SONARQUBE_JDBC_PASSWORD=${DB_PASSWORD}
+      - SONARQUBE_JDBC_URL=jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    depends_on:
+      sonar-db:
+        condition: service_healthy
+  sonar-db:
+    image: postgres:alpine
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    ports:
+      - ${SONAR_DB_PORT}:${DB_PORT}
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${DB_USER}"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-db:
