@@ -1,14 +1,19 @@
 version: '3.8'
 services:
-   #web:
-   # build: .
-   # env_file:
-   #   - .env
-   # ports:
-   #   - 3000:3000
-   #volumes:
-   #  - .:/usr/src/awesome-go-fiber-sonarqube-gh-actions
-   #command: air cmd/main.go -b 0.0.0.0
+  web:
+    build: .
+    env_file:
+      - .env
+    ports:
+      - 3000:3000
+    volumes:
+      - .:/usr/src/awesome-go-fiber-sonarqube-gh-actions
+    command: air cmd/main.go -b 0.0.0.0
+    networks:
+      - postgres-db
+    depends_on:
+      sonar-db:
+        condition: service_healthy
   db:
     image: postgres:alpine
     environment:
@@ -16,9 +21,17 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_DB=${DB_NAME}
     ports:
-      - ${DB_PORT}:${DB_PORT}
+      - ${APP_DB_PORT}:${DB_PORT}
     volumes:
       - postgres-db:/var/lib/postgresql/data
+    networks:
+      - postgres-db
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "${DB_USER}" ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
   sonarqube:
     image: sonarqube:latest
     ports:
@@ -37,12 +50,15 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_DB=${DB_NAME}
     ports:
-      - ${SONAR_DB_PORT}:${DB_PORT}
+      - ${DB_PORT}:${DB_PORT}
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "${DB_USER}"]
       interval: 30s
       timeout: 5s
       retries: 5
 
+networks:
+  postgres-db:
+    driver: bridge
 volumes:
   postgres-db:
