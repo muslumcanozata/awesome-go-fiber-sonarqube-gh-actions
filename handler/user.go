@@ -11,6 +11,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+const reviewYourInput string = "Review your input"
+
 func hashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
 	return string(bytes), err
@@ -63,7 +65,7 @@ func CreateUser(c *fiber.Ctx) error {
 	db := db.DB
 	user := new(model.User)
 	if err := c.BodyParser(user); err != nil {
-		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "Review your input", "errors": err.Error()})
+		return c.Status(500).JSON(fiber.Map{"status": "error", "message": reviewYourInput, "errors": err.Error()})
 	}
 
 	validate := validator.New()
@@ -96,7 +98,7 @@ func UpdateUser(c *fiber.Ctx) error {
 	}
 	var uui UpdateUserInput
 	if err := c.BodyParser(&uui); err != nil {
-		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "Review your input", "errors": err.Error()})
+		return c.Status(500).JSON(fiber.Map{"status": "error", "message": reviewYourInput, "errors": err.Error()})
 	}
 	id := c.Params("id")
 	token := c.Locals("user").(*jwt.Token)
@@ -122,7 +124,7 @@ func DeleteUser(c *fiber.Ctx) error {
 	}
 	var pi PasswordInput
 	if err := c.BodyParser(&pi); err != nil {
-		return c.Status(500).JSON(fiber.Map{"status": "error", "message": "Review your input", "errors": err.Error()})
+		return c.Status(500).JSON(fiber.Map{"status": "error", "message": reviewYourInput, "errors": err.Error()})
 	}
 	id := c.Params("id")
 	token := c.Locals("user").(*jwt.Token)
